@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:wookie_bank/account.dart';
 import 'package:wookie_bank/login.dart';
 
 void main() {
@@ -33,7 +34,7 @@ class _MyHomePageState extends State<MyHomePage> {
         appBar: new AppBar(
           title: new Text('Wookiee Bank'),
           ),
-        body: LoginPage()
+        body: AccountPage()
        ) ;
     }
 }
