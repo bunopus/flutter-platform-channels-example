@@ -4,6 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'animated_rectangle.dart';
+
 class AccountPage extends StatefulWidget {
   @override
   State<StatefulWidget> createState() {
@@ -13,7 +15,13 @@ class AccountPage extends StatefulWidget {
 
 class _AccountPageState extends State<AccountPage> {
   static const CHANNEL_NAME = 'wookie.bank/vi';
-  String nativeMessage = '';
+
+  String _nativeMessage = '';
+  int _incomingCounter = 0;
+  int _outcomingCounter = 0;
+  int _missingCounter = 0;
+  bool _isCounterRunning = false;
+  bool _isAnimationRunning = false;
 
   @override
   void initState() {
@@ -24,11 +32,15 @@ class _AccountPageState extends State<AccountPage> {
   void _listenChannel() {
     ServicesBinding.instance.defaultBinaryMessenger
         .setMessageHandler(CHANNEL_NAME, (ByteData message) async {
-      final double x = message.getFloat64(0);
-      final int n = message.getInt32(8);
+      final int n = message.getInt32(0);
 
+      if (n != (_incomingCounter + 1) && n != 0 && _isCounterRunning) {
+        _missingCounter++;
+        print('Error! Missed $_missingCounter times');
+      }
+      _incomingCounter = n;
       setState(() {
-        nativeMessage = "By the way: x = $x and n = $n";
+        _nativeMessage = "$n";
       });
 
       return null;
@@ -36,47 +48,79 @@ class _AccountPageState extends State<AccountPage> {
   }
 
   Future<Null> _sendDataToNative() async {
-    final WriteBuffer buffer = WriteBuffer()
-      ..putFloat64(3.1415)
-      ..putInt32(12345678);
-    final ByteData message = buffer.done();
-    await ServicesBinding.instance.defaultBinaryMessenger
-        .send(CHANNEL_NAME, message);
+    do {
+      final WriteBuffer buffer = WriteBuffer()..putInt32(_outcomingCounter);
+      final ByteData message = buffer.done();
+
+      await ServicesBinding.instance.defaultBinaryMessenger
+          .send(CHANNEL_NAME, message);
+      _outcomingCounter++;
+    } while (_isCounterRunning);
+  }
+
+  void _onRunButton() {
+    _isCounterRunning = !_isCounterRunning;
+    if (_isCounterRunning) {
+      _outcomingCounter = _incomingCounter = 0;
+    }
+    _sendDataToNative();
+  }
+
+  void _onAnimationButton() {
+    setState(() {
+      _isAnimationRunning = !_isAnimationRunning;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return new Scaffold(
-        // appBar: new AppBar(
-        //   title: new Text('Wookiee Bank'),
-        // ),
         body: Center(
-      child: Column(
-        children: <Widget>[
-          SizedBox(height: 150.0),
-          Text(
-            'You have 1000 Wookiee Coins!',
-            style: TextStyle(fontSize: 20),
-          ),
-          Padding(
-              padding: EdgeInsets.symmetric(vertical: 20),
-              child: RaisedButton(
-                child: Text("Connect"),
-                onPressed: _sendDataToNative,
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: 20),
+        child: Column(
+          children: <Widget>[
+            Row(children: <Widget>[
+              Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 20),
+                  child: RaisedButton(
+                    child: _isCounterRunning ? Text("Stop") : Text("Run"),
+                    onPressed: _onRunButton,
+                  )),
+              Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 20),
+                  child: RaisedButton(
+                    child: _isAnimationRunning
+                        ? Text("Hide animation")
+                        : Text("Show animation"),
+                    onPressed: _onAnimationButton,
+                  )),
+            ], mainAxisAlignment: MainAxisAlignment.center),
+            Padding(
+              child: Center(
+                  child: Text(
+                _nativeMessage,
+                style: TextStyle(fontSize: 15),
               )),
-          Padding(
-            child: Center(
-                child: Text(
-              nativeMessage,
-              style: TextStyle(fontSize: 15),
-            )),
-            padding: EdgeInsets.only(bottom: 20),
-          ),
-          Image(
-              image: AssetImage("assets/wookie_head.png"),
-              fit: BoxFit.scaleDown,
-              width: 200)
-        ],
+              padding: EdgeInsets.symmetric(vertical: 20),
+            ),
+            Padding(
+              child: Center(
+                  child: Text(
+                "Missed messages: $_missingCounter",
+                style: TextStyle(fontSize: 15, color: Colors.red),
+              )),
+              padding: EdgeInsets.only(bottom: 20),
+            ),
+            if (_isAnimationRunning)
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Center(
+                  child: AnimatedRectangle(),
+                ),
+              )
+          ],
+        ),
       ),
     ));
   }

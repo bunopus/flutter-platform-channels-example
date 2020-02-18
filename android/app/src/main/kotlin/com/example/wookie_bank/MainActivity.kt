@@ -20,17 +20,12 @@ class MainActivity : FlutterActivity() {
         flutterEngine.getDartExecutor().setMessageHandler(CHANNEL) { message, reply ->
             message?.order(ByteOrder.nativeOrder())
 
-            val x:Double = message?.double ?: 0.0
             val n:Int = message?.int ?: 0
-
-            Log.i("FLUTTER", "Received: $x and $n")
-
-            val message2 = ByteBuffer.allocateDirect(12)
-            message2.putDouble(x)
+            
+            val message2 = ByteBuffer.allocateDirect(4)
             message2.putInt(n)
             
             flutterEngine.getDartExecutor().send(CHANNEL, message2) { _ ->
-                Log.i("FLUTTER", "Sent $x and $n")                
             }
 
             reply?.reply(null)
