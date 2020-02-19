@@ -1,13 +1,11 @@
 package com.example.wookie_bank
 
-import android.util.Log
 import androidx.annotation.NonNull
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugins.GeneratedPluginRegistrant
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
-import java.util.Arrays
+import io.flutter.plugin.common.BasicMessageChannel
+import io.flutter.plugin.common.StringCodec
 
 
 class MainActivity : FlutterActivity() {
@@ -17,16 +15,7 @@ class MainActivity : FlutterActivity() {
     override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
         GeneratedPluginRegistrant.registerWith(flutterEngine)
 
-        flutterEngine.dartExecutor.binaryMessenger.setMessageHandler(CHANNEL) { message, reply ->
-
-            // https://github.com/flutter/flutter/issues/19849
-            val direct = ByteBuffer.allocateDirect(message?.remaining()!!).put(message)
-
-            flutterEngine.dartExecutor.binaryMessenger.send(CHANNEL, direct) {
-
-            }
-
-            reply.reply(null)
-        }
+        val channel = BasicMessageChannel<String>(flutterEngine.dartExecutor, CHANNEL, StringCodec.INSTANCE)
+        channel.setMessageHandler { message, reply -> reply.reply("$message to you!") }
     }
 }
