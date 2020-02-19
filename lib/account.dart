@@ -10,50 +10,46 @@ class AccountPage extends StatefulWidget {
 
 class _AccountPageState extends State<AccountPage> {
   static const CHANNEL_NAME = 'wookie.bank/vi';
+  int balance = 1000;
 
-  String _nativeMessage = '';
-  static const channel =
-      BasicMessageChannel<String>(CHANNEL_NAME, StringCodec());
+  static const channel = const MethodChannel(CHANNEL_NAME);
+
+  Future<Null> _vibrate() async {
+    try {
+      final String result = await channel.invokeMethod('vibrateDevice');
+      print(result);
+    } on PlatformException catch (e) {
+      print("ERROR: ${e.message}");
+    }
+  }
 
   @override
   void initState() {
     super.initState();
-  }
-
-  Future<String> _sendDataToNative() async {
-    return channel.send("Hello!");
-  }
-
-  void _onRunButton() async {
-    _nativeMessage = await _sendDataToNative();
-    setState(() {});
+    if (balance >= 1000) {
+      _vibrate();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return new Scaffold(
         body: Center(
-      child: Padding(
-        padding: EdgeInsets.symmetric(vertical: 20),
-        child: Column(
-          children: <Widget>[
-            Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20),
-                child: RaisedButton(
-                  child: Text("Send string"),
-                  onPressed: _onRunButton,
-                )),
-            Padding(
-              child: Center(
-                  child: Text(
-                _nativeMessage,
-                style: TextStyle(fontSize: 15),
-              )),
-              padding: EdgeInsets.symmetric(vertical: 20),
-            ),
-          ],
-        ),
-      ),
-    ));
+          child: Column(
+            children: <Widget>[
+              Padding(
+                child: Text(
+                  'You have $balance Wookiee Coins!',
+                  style: TextStyle(fontSize: 20),
+                ),
+                padding: EdgeInsets.only(top: 170, bottom: 25),
+              ),
+              Image(
+                  image: AssetImage("assets/wookie_head.png"),
+                  fit: BoxFit.scaleDown,
+                  width: 200)
+            ],
+          ),
+        ));
   }
 }
