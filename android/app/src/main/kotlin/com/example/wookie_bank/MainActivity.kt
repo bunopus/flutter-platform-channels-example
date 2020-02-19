@@ -19,7 +19,10 @@ class MainActivity : FlutterActivity() {
 
         flutterEngine.dartExecutor.binaryMessenger.setMessageHandler(CHANNEL) { message, reply ->
 
-            flutterEngine.dartExecutor.binaryMessenger.send(CHANNEL, message) {
+            // https://github.com/flutter/flutter/issues/19849
+            val direct = ByteBuffer.allocateDirect(message?.remaining()!!).put(message)
+
+            flutterEngine.dartExecutor.binaryMessenger.send(CHANNEL, direct) {
 
             }
 
