@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:wookie_bank/login.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class AccountPage extends StatefulWidget {
   @override
@@ -34,25 +34,29 @@ class _AccountPageState extends State<AccountPage> {
   @override
   Widget build(BuildContext context) {
     return new Scaffold(
-        appBar: new AppBar(
-          title: new Text('Wookiee Bank'),
-        ),
         body: Center(
-          child: Column(
-            children: <Widget>[
-              Padding(
-                child: Text(
-                  'You have 1000 Wookiee Coins!',
-                  style: TextStyle(fontSize: 20),
-                ),
-                padding: EdgeInsets.only(top: 170, bottom: 25),
-              ),
-              Image(
-                  image: AssetImage("assets/wookie_head.png"),
-                  fit: BoxFit.scaleDown,
-                  width: 200)
-            ],
+      child: Column(
+        children: <Widget>[
+          Padding(
+            child: Text(
+              'You have 1000 Wookiee Coins!',
+              style: TextStyle(fontSize: 20),
+            ),
+            padding: EdgeInsets.only(top: 170, bottom: 25),
           ),
-        ));
+          Image(
+              image: AssetImage("assets/wookie_head.png"),
+              fit: BoxFit.scaleDown,
+              width: 200),
+          Padding(
+            padding: EdgeInsets.only(top: 10),
+            child: FlatButton(
+              child: Text("contact bank"),
+              onPressed: () => launch("https://www.google.com"),
+            ),
+          )
+        ],
+      ),
+    ));
   }
 }
