@@ -16,12 +16,9 @@ class AccountPage extends StatefulWidget {
 class _AccountPageState extends State<AccountPage> {
   static const CHANNEL_NAME = 'wookie.bank/vi';
 
-  String _nativeMessage = '';
-  int _incomingCounter = 0;
-  int _outcomingCounter = 0;
-  int _missingCounter = 0;
-  bool _isCounterRunning = false;
   bool _isAnimationRunning = false;
+  Stopwatch stopwatch = new Stopwatch();
+  Duration _packageDeliveryTime;
 
   @override
   void initState() {
@@ -32,15 +29,13 @@ class _AccountPageState extends State<AccountPage> {
   void _listenChannel() {
     ServicesBinding.instance.defaultBinaryMessenger
         .setMessageHandler(CHANNEL_NAME, (ByteData message) async {
-      final int n = message.getInt32(0);
 
-      if (n != (_incomingCounter + 1) && n != 0 && _isCounterRunning) {
-        _missingCounter++;
-        print('Error! Missed $_missingCounter times');
-      }
-      _incomingCounter = n;
+      stopwatch.stop();
+      print(message.getInt32(0));
+
       setState(() {
-        _nativeMessage = "$n";
+        _packageDeliveryTime = stopwatch.elapsed;
+        stopwatch.reset();
       });
 
       return null;
@@ -48,28 +43,21 @@ class _AccountPageState extends State<AccountPage> {
   }
 
   Future<Null> _sendDataToNative() async {
-    do {
-      final WriteBuffer buffer = WriteBuffer()..putInt32(_outcomingCounter);
-      final ByteData message = buffer.done();
+    final WriteBuffer buffer = WriteBuffer();
 
-      await ServicesBinding.instance.defaultBinaryMessenger
-          .send(CHANNEL_NAME, message);
-      _outcomingCounter++;
-    } while (_isCounterRunning);
+    for (var i = 0; i < 1; i++) {
+      buffer.putInt32(i);
+    }
+    final ByteData message = buffer.done();
+
+    stopwatch.start();
+
+    await ServicesBinding.instance.defaultBinaryMessenger
+        .send(CHANNEL_NAME, message);
   }
 
   void _onRunButton() {
-    _isCounterRunning = !_isCounterRunning;
-    if (_isCounterRunning) {
-      _outcomingCounter = _incomingCounter = 0;
-    }
     _sendDataToNative();
-  }
-
-  void _onAnimationButton() {
-    setState(() {
-      _isAnimationRunning = !_isAnimationRunning;
-    });
   }
 
   @override
@@ -80,37 +68,19 @@ class _AccountPageState extends State<AccountPage> {
         padding: EdgeInsets.symmetric(vertical: 20),
         child: Column(
           children: <Widget>[
-            Row(children: <Widget>[
-              Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20),
-                  child: RaisedButton(
-                    child: _isCounterRunning ? Text("Stop") : Text("Run"),
-                    onPressed: _onRunButton,
-                  )),
-              Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20),
-                  child: RaisedButton(
-                    child: _isAnimationRunning
-                        ? Text("Hide animation")
-                        : Text("Show animation"),
-                    onPressed: _onAnimationButton,
-                  )),
-            ], mainAxisAlignment: MainAxisAlignment.center),
+            Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20),
+                child: RaisedButton(
+                  child: Text("Send package"),
+                  onPressed: _onRunButton,
+                )),
             Padding(
               child: Center(
                   child: Text(
-                _nativeMessage,
+                "Time to deliver package: ${_packageDeliveryTime?.inMilliseconds}",
                 style: TextStyle(fontSize: 15),
               )),
               padding: EdgeInsets.symmetric(vertical: 20),
-            ),
-            Padding(
-              child: Center(
-                  child: Text(
-                "Missed messages: $_missingCounter",
-                style: TextStyle(fontSize: 15, color: Colors.red),
-              )),
-              padding: EdgeInsets.only(bottom: 20),
             ),
             if (_isAnimationRunning)
               Padding(

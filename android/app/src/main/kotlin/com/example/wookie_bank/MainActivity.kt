@@ -17,18 +17,13 @@ class MainActivity : FlutterActivity() {
     override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
         GeneratedPluginRegistrant.registerWith(flutterEngine)
 
-        flutterEngine.getDartExecutor().setMessageHandler(CHANNEL) { message, reply ->
-            message?.order(ByteOrder.nativeOrder())
+        flutterEngine.dartExecutor.binaryMessenger.setMessageHandler(CHANNEL) { message, reply ->
 
-            val n:Int = message?.int ?: 0
-            
-            val message2 = ByteBuffer.allocateDirect(4)
-            message2.putInt(n)
-            
-            flutterEngine.getDartExecutor().send(CHANNEL, message2) { _ ->
+            flutterEngine.dartExecutor.binaryMessenger.send(CHANNEL, message) {
+
             }
 
-            reply?.reply(null)
+            reply.reply(null)
         }
     }
 }
