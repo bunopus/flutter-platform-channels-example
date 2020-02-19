@@ -1,41 +1,70 @@
 package com.example.wookie_bank
 
-import android.os.VibrationEffect
-import android.os.Vibrator
+import android.content.Context
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
 import androidx.annotation.NonNull
 import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
-import io.flutter.plugin.common.MethodChannel
+import io.flutter.plugin.common.EventChannel
 import io.flutter.plugins.GeneratedPluginRegistrant
-import android.content.Context
-import android.os.Build
-import android.util.Log
+import androidx.lifecycle.LifecycleRegistry
+import androidx.core.content.ContextCompat.getSystemService
+import android.icu.lang.UCharacter.GraphemeClusterBreak.T
+import android.os.Bundle
+import androidx.lifecycle.Lifecycle
+import java.util.*
+import java.util.concurrent.TimeUnit
 
-class MainActivity : FlutterActivity() {
+
+class MainActivity : FlutterActivity(), SensorEventListener {
+    private var manager: SensorManager? = null
+    private var sink: EventChannel.EventSink? = null
     private val CHANNEL = "wookie.bank/vi"
 
     override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
         GeneratedPluginRegistrant.registerWith(flutterEngine)
 
-        val channel = MethodChannel(flutterEngine.dartExecutor, CHANNEL)
-        channel.setMethodCallHandler { call, result ->
-            when (call.method) {
-                "vibrateDevice" -> {
-                    Log.i("FLUTTER","${call.arguments}")
-                    val duration = (call.arguments as Int).toLong()
-
-                    val message = "Vibrated device for $duration"
-
-                    val vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        vibrator.vibrate(VibrationEffect.createOneShot(duration, VibrationEffect.DEFAULT_AMPLITUDE))
-                    } else {
-                        vibrator.vibrate(duration)
+        EventChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setStreamHandler(
+                object : EventChannel.StreamHandler {
+                    override fun onCancel(arguments: Any?) {
+                        sink = null
                     }
-                    result.success(message)
+
+                    override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
+                        sink = events
+                    }
+
                 }
-                else -> result.notImplemented()
-            }
-        }
+        )
     }
+
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        manager = getSystemService(SENSOR_SERVICE) as SensorManager
+    }
+
+    override fun onResume() {
+        super.onResume()
+        manager?.registerListener(this,
+                manager?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), 100)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        manager?.unregisterListener(this)
+    }
+
+    override fun onSensorChanged(sensorEvent: SensorEvent) {
+        sink?.success(sensorEvent.values[1])
+    }
+
+    override fun onAccuracyChanged(p0: Sensor?, p1: Int) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
 }

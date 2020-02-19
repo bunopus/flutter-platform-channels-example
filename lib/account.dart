@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:wookie_bank/login.dart';
 
 class AccountPage extends StatefulWidget {
   @override
@@ -10,36 +13,36 @@ class AccountPage extends StatefulWidget {
 
 class _AccountPageState extends State<AccountPage> {
   static const CHANNEL_NAME = 'wookie.bank/vi';
-  int balance = 1000;
 
-  static const channel = const MethodChannel(CHANNEL_NAME);
-
-  Future<Null> _vibrate() async {
-    try {
-      final String result = await channel.invokeMethod('vibrateDevice', 2000);
-      print(result);
-    } on PlatformException catch (e) {
-      print("ERROR: ${e.message}");
-    }
-  }
+  static const channel = EventChannel(CHANNEL_NAME);
+  StreamSubscription subscription;
 
   @override
   void initState() {
+    subscription = channel
+        .receiveBroadcastStream()
+        .where((value) => value > 10)
+        .listen((_) {
+      Navigator.pop(context);
+      subscription.cancel();
+    }, onError: (dynamic error) {
+      print('Received error: ${error.message}');
+    });
     super.initState();
-    if (balance >= 1000) {
-      _vibrate();
-    }
   }
 
   @override
   Widget build(BuildContext context) {
     return new Scaffold(
+        appBar: new AppBar(
+          title: new Text('Wookiee Bank'),
+        ),
         body: Center(
           child: Column(
             children: <Widget>[
               Padding(
                 child: Text(
-                  'You have $balance Wookiee Coins!',
+                  'You have 1000 Wookiee Coins!',
                   style: TextStyle(fontSize: 20),
                 ),
                 padding: EdgeInsets.only(top: 170, bottom: 25),

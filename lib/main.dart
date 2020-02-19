@@ -34,7 +34,7 @@ class _MyHomePageState extends State<MyHomePage> {
         appBar: new AppBar(
           title: new Text('Wookiee Bank'),
           ),
-        body: AccountPage()
+        body: LoginPage()
        ) ;
     }
 }
