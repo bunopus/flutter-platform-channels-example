@@ -16,7 +16,7 @@ class _AccountPageState extends State<AccountPage> {
 
   Future<Null> _vibrate() async {
     try {
-      final String result = await channel.invokeMethod('vibrateDevice');
+      final String result = await channel.invokeMethod('vibrateDevice', 2000);
       print(result);
     } on PlatformException catch (e) {
       print("ERROR: ${e.message}");
